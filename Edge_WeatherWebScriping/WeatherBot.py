@@ -16,7 +16,7 @@ options = EdgeOptions()
 options.use_chromium = True
 #options.add_argument('--start-maximized')
 options.add_argument('--disable-extensions')
-driver_path = 'Driver/msedgedriver.exe'
+driver_path = 'Driver\\msedgedriver.exe'
 
 #Opciones de navegacion
 driver = Edge(executable_path=driver_path, options=options)
