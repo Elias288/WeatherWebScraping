@@ -1,8 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
-import pandas as pd
-#from typing import Optional
-#from msedge.selenium_tools import Edge, EdgeOptions
+import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 
@@ -12,55 +10,146 @@ class scriping:
         self.wind = window
         self.wind.title('Weather Bot')
 
-        ttk.Button(window, text='Obtener informe de clima', command=self.obtener). grid(row=0, column=1, columnspan=3)
+        ttk.Label(window, text="Elija departamento").grid(row=0, column=0)
+        n = tk.StringVar()
+        self.combo = ttk.Combobox(window, width= 27, textvariable = n)
+        self.combo['values'] = ('Montevideo', 'Paysandú', 'Durazno', 'Artigas')
+        self.combo.grid(row=0, column=1)
+        self.combo.current(0)
 
-        Label(window, text='Dias',).grid(row=1, column=0)
-        Label(window, text='Fecha', ).grid(row=1, column=1)
-        Label(window, text='Grados', ).grid(row=1, column=2)
-        Label(window, text='Estado', ).grid(row=1, column=3)
-        Label(window, text='Prov. de lluvia', ).grid(row=1, column=4)
+        ttk.Button(window, text='Obtener informe de clima', command= self.obtener).grid(row=0, column=2)
+
+        self.message = Label(text = '', fg = 'red')
+        self.message.grid(row=2, column= 1)
+
+        columns = ('#1', '#2', '#3', '#4', '#5', '#6')
+        self.tree = ttk.Treeview(window, columns=columns, show='headings')
+        self.tree.grid(row= 3, column=0, columnspan=3)
+        self.tree.column("#1", minwidth=0, width=100, stretch=NO)
+        self.tree.column("#2", minwidth=0, width=50, stretch=NO)
+        self.tree.column("#3", minwidth=0, width=100, stretch=NO)
+        self.tree.column("#4", minwidth=0, width=100, stretch=NO)
+        self.tree.column("#5", minwidth=0, width=150, stretch=NO)
+        self.tree.column("#6", minwidth=0, width=100, stretch=NO)
+
+        self.tree.heading('#1', text='Dia')
+        self.tree.heading('#2', text='Fecha')
+        self.tree.heading('#3', text='Temp. Max')
+        self.tree.heading('#4', text='Temp. Min')
+        self.tree.heading('#5', text='Descripcion')
+        self.tree.heading('#6', text='Prob. lluvia')
 
     def info(self):
-        urlMontevideo = 'https://www.accuweather.com/es/uy/montevideo/349269/daily-weather-forecast/349269/'
-        page = requests.get(urlMontevideo)
-        soup = BeautifulSoup(page.content, 'html.parser')
+        url = ''
+        if self.combo.get() == 'Montevideo':
+            self.message['text'] = ''
+            url = 'https://www.accuweather.com/es/uy/montevideo/349269/daily-weather-forecast/349269'
+        if self.combo.get() == 'Paysandú':
+            self.message['text'] = ''
+            url = 'https://www.accuweather.com/es/uy/paysandu/350474/daily-weather-forecast/350474'
+        if self.combo.get() == 'Durazno':
+            self.message['text'] = ''
+            url = 'https://www.accuweather.com/es/uy/durazno/347830/daily-weather-forecast/347830'
+        if self.combo.get() == 'Artigas':
+            self.message['text'] = ''
+            url = 'https://www.accuweather.com/es/uy/artigas/347277/daily-weather-forecast/347277'
 
-        eq = soup.find_all('div', class_='daily-wrapper')
+        if url != '':
+            agent = {"User-Agent": "Mozilla/5.0"}
+            page = requests.get(url, headers=agent).text
+            soup = BeautifulSoup(page, 'html.parser')
 
-        print(eq)
+            #SEPARAR
+            # DIAS
+            listdia = soup.find_all('span', class_='module-header dow date')
+            self.dia = list()
 
-        #SEPARAR
-        #datos_semana = info_clima.split(titulo)[1].split('\n')[1:36]
+            count = 0
+            for i in listdia:
+                if count < 7:
+                    self.dia.append(i.text)
+                else:
+                    break
+                count += 1
 
+            # FECHAS
+            listfecha = soup.find_all('span', class_='module-header sub date')
+            self.fecha = list()
+            count = 0
+            for i in listfecha:
+                if count < 7:
+                    self.fecha.append(i.text)
+                else:
+                    break
+                count += 1
 
-        #return datos_semana
+            # TEMPERATURA ALTA
+            listtempalt = soup.find_all('span', class_='high')
+            self.tempalta = list()
+            count = 0
+            for i in listtempalt:
+                if count < 7:
+                    self.tempalta.append(i.text)
+                else:
+                    break
+                count += 1
+
+            # TEMPERATURA BAJA
+            listtempbaja = soup.find_all('span', class_='low')
+            self.tempabaja = list()
+            count = 0
+            for i in listtempbaja:
+                if count < 7:
+                    i = i.text.replace('/', '')
+                    self.tempabaja.append(i)
+                else:
+                    break
+                count += 1
+
+            # DESCRIPCION
+            listdescripcion = soup.find_all('div', class_='phrase')
+            self.descripcion = list()
+            count = 0
+            for i in listdescripcion:
+                if count < 7:
+                    i = i.text.replace('\n', '')
+                    i = i.replace('\t', '')
+                    self.descripcion.append(i)
+                else:
+                    break
+                count += 1
+
+            # PROBABILIDAD DE LLUVIA
+            listlluvia = soup.find_all('div', class_='precip')
+            self.lluvia = list()
+            count = 0
+            for i in listlluvia:
+                if count < 7:
+                    i = i.text.replace('\n', '')
+                    i = i.replace('\t', '')
+                    i = i.replace('\xa0%', '')
+                    self.lluvia.append(i)
+                else:
+                    break
+                count += 1
 
     def obtener(self):
-        datos_semana = self.info()
-        #datos_semana = ['DOM.', '10/1', '37° /22°', 'Más cálido', '1 %', 'LUN.', '11/1', '28° /18°', 'Algunas severas tormentas', '66 %', 'MAR.', '12/1', '28° /14°', 'Aclarando', '0 %', 'MIÉ.', '13/1', '30° /16°', 'Soleado y agradable', '0 %', 'JUE.', '14/1', '31° /19°', 'Parcialmente soleado', '1 %', 'VIE.', '15/1', '28° /22°', 'Algunas tormentas severas', '67 %', 'SÁB.', '16/1', '32° /14°', 'Potentes tormentas temprano', '71 %']
-        dia = list()
-        fecha = list()
-        grados = list()
-        estado = list()
-        humedad = list()
+        if self.combo.get() == '':
+            self.message['text'] = 'Elija un departamento'
+        else:
+            self.info()
 
-        for i in range(0, len(datos_semana), 5):
-            dia.append(datos_semana[i])
-            fecha.append((datos_semana[i + 1]))
-            grados.append((datos_semana[i + 2]))
-            estado.append((datos_semana[i + 3]))
-            humedad.append((datos_semana[i + 4]))
+            # cleaning table
+            records = self.tree.get_children()
+            for element in records:
+                self.tree.delete(element)
 
-        i = 2
-        p = 0
-        for x in range(7):
-            Label(window, text=dia[x]).grid(row= i, column=p)
-            Label(window, text=fecha[x]).grid(row=i, column=p + 1)
-            Label(window, text=grados[x]).grid(row=i, column=p + 2)
-            Label(window, text=estado[x]).grid(row=i, column=p + 3)
-            Label(window, text=humedad[x]).grid(row=i, column=p + 4)
-            i += 1
-            p = 0
+            fila = []
+            for n in range(7):
+                fila.append((self.dia[n], self.fecha[n], self.tempalta[n], self.tempabaja[n], self.descripcion[n], self.lluvia[n]))
+
+            for x in fila:
+                self.tree.insert('', tk.END, values=x)
 
 if __name__ == '__main__':
     window = Tk()
